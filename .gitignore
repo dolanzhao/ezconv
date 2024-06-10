@@ -1,0 +1,8 @@
+.vscode
+
+/bazel-*
+testdata
+
+*.log
+
+MODULE.bazel.lock

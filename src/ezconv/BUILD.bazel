@@ -1,0 +1,90 @@
+cc_library(
+    name = "protobuf-c",
+    hdrs = [
+        "protobuf-c/protobuf-c.h",
+    ],
+    srcs = [
+        "protobuf-c/protobuf-c.c",
+    ],
+)
+
+cc_library(
+  name = "profile_pb-c",
+  hdrs = ["profile.pb-c.h"],
+  srcs = ["profile.pb-c.c"],
+  deps = [
+    ":protobuf-c",
+  ],
+)
+
+cc_library(
+  name = "profile",
+  hdrs = ["profile.h"],
+  srcs = ["profile.cc"],
+  deps = [
+    ":profile_pb-c",
+    "@abseil-cpp//absl/log:log",
+  ],
+)
+
+cc_library(
+  name = "default_reader",
+  hdrs = ["default_reader.h", "rapidyaml-0.6.0.hpp"],
+  srcs = ["default_reader.cc"],
+  deps = [
+    "@abseil-cpp//absl/log:log",
+    "@abseil-cpp//absl/status",
+],
+)
+
+cc_library(
+  name = "meta_reader",
+  hdrs = ["meta_reader.h"],
+  srcs = ["meta_reader.cc"],
+  deps = [
+    ":default_reader",
+    ":profile",
+    "@abseil-cpp//absl/log:log",
+    "@abseil-cpp//absl/status",
+],
+)
+
+cc_library(
+  name = "profile_reader",
+  hdrs = ["profile_reader.h"],
+  srcs = ["profile_reader.cc"],
+  deps = [
+    ":meta_reader",
+    "@abseil-cpp//absl/log:log",
+    "@abseil-cpp//absl/status",
+],
+)
+
+cc_library(
+  name = "cct_reader",
+  hdrs = ["cct_reader.h"],
+  srcs = ["cct_reader.cc"],
+  deps = [
+    ":meta_reader",
+    ":profile_reader",
+    ":profile",
+    "@abseil-cpp//absl/log:log",
+    "@abseil-cpp//absl/status",
+],
+)
+
+cc_binary(
+  name = "ezconv",
+  srcs = ["main.cc"],
+  deps = [
+    ":default_reader",
+    ":cct_reader",
+    ":meta_reader",
+    ":profile",
+    ":profile_reader",
+    "@abseil-cpp//absl/flags:parse",
+    "@abseil-cpp//absl/flags:flag",
+    "@abseil-cpp//absl/log:log",
+    "@abseil-cpp//absl/log:initialize",
+    ],
+)
