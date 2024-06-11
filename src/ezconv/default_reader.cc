@@ -37,7 +37,7 @@ DefaultReader::readContent()
     context_tree.resolve();
 
     LOG(INFO) << "Roots: " << context_tree["roots"].num_children();
-    for (int i = 0; i < context_tree["roots"].num_children(); i++) {
+    for (auto i = 0; i < context_tree["roots"].num_children(); i++) {
         auto metric = context_tree["roots"][i];
         std::string name;
         metric["name"] >> name;

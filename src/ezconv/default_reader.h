@@ -2,6 +2,8 @@
 #define EZCONV_DEFAULT_H_
 
 #include <fstream>
+#include <string>
+#include <unordered_map>
 
 #include "absl/status/status.h"
 

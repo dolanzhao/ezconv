@@ -33,9 +33,9 @@ private:
     std::vector<uint64_t> section_size_;
     std::vector<uint64_t> section_pointer_;
 
-    std::vector<float64_t> metric_sum_value_;
+    std::vector<double> metric_sum_value_;
 
-    std::unordered_map<uint32_t, std::vector<float64_t>> ctxt_metric_values_map_;
+    std::unordered_map<uint32_t, std::vector<double>> ctxt_metric_values_map_;
 
     std::unordered_map<std::string, std::string> metric_exc_type_map_;
     std::unordered_map<std::string, std::string> metric_desc_map_;

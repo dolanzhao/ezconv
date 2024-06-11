@@ -1,3 +1,5 @@
+#include <iomanip>  
+
 #include "cct_reader.h"
 #include "meta_reader.h"
 #include "profile_reader.h"
@@ -82,8 +84,8 @@ CCTReader::readContent()
                       }
                       this->readSingleContextMetrics(ctxts_pointer + i * ctxts_size, i);
                   }
-                  std::vector<float64_t> metric_factor;
-                  for (int i = 0; i < metric_sum_value_.size(); i++) {
+                  std::vector<double> metric_factor;
+                  for (auto i = 0; i < metric_sum_value_.size(); i++) {
                       Profile::metric_type_t *metric_type = meta_reader_->getMetricType(i);
                       std::string metric_des = profile_->get_string_table()->get_string(
                           metric_type->get_des());
@@ -108,7 +110,7 @@ CCTReader::readContent()
                       LOG(ERROR) << "SUM Metric " << metric_des << ": " << metric_sum_value_[i];
                   }
 
-                  for (int i = 0; i < metric_sum_value_.size(); i++) {
+                  for (auto i = 0; i < metric_sum_value_.size(); i++) {
                       if (metric_sum_value_[i] == 0.0) {
                           continue;
                       }
@@ -127,7 +129,7 @@ CCTReader::readContent()
                       uint32_t ctxt_id = ctxt_metric_values.first;
                       Profile::context_t *ctxt = meta_reader_->getCtxt(ctxt_id);
                       std::vector<uint64_t> metric_values;
-                      for (int i = 0; i < ctxt_metric_values.second.size(); i++) {
+                      for (auto i = 0; i < ctxt_metric_values.second.size(); i++) {
                           if (metric_sum_value_[i] == 0.0) {
                             continue;
                           }
@@ -165,7 +167,7 @@ CCTReader::readContent()
     LOG(INFO) << "Version: " << static_cast<int>(major_version_) << "."
               << static_cast<int>(minor_version_);
 
-    for (int i = 0; i < section_offset_map.size(); i++) {
+    for (auto i = 0; i < section_offset_map.size(); i++) {
         uint64_t size;
         file_.read(reinterpret_cast<char *>(&size), sizeof(size));
         LITTLE_ENDIAN_TO_HOST(size);
@@ -176,7 +178,7 @@ CCTReader::readContent()
         section_pointer_.push_back(pointer);
     }
 
-    for (int i = 0; i < section_read_order.size(); i++) {
+    for (auto i = 0; i < section_read_order.size(); i++) {
         const std::string &section_name = section_read_order[i];
         uint64_t pointer = section_pointer_[section_offset_map.at(section_name)];
         uint64_t size = section_size_[section_offset_map.at(section_name)];
@@ -237,7 +239,7 @@ CCTReader::readSingleContextMetrics(uint64_t pointer, uint32_t ctxt_id)
     //            << "]";
 
     ctxt_metric_values_map_.insert(
-        { ctxt_id, std::vector<float64_t>(meta_reader_->needRecordMetricNum(), 0) });
+        { ctxt_id, std::vector<double>(meta_reader_->needRecordMetricNum(), 0) });
     for (auto metric : metrics) {
         // LOG(ERROR) << "Recorded Metric " << metric.metric_id << " at " <<
         // metric.metric_start_idx;
@@ -248,7 +250,7 @@ CCTReader::readSingleContextMetrics(uint64_t pointer, uint32_t ctxt_id)
         file_.read(reinterpret_cast<char *>(&profile_idx), sizeof(profile_idx));
         LITTLE_ENDIAN_TO_HOST(profile_idx);
 
-        float64_t value;
+        double value;
         file_.read(reinterpret_cast<char *>(&value), sizeof(value));
         LITTLE_ENDIAN_TO_HOST(value);
         // LOG(ERROR) << "Metric " << meta_reader_->getMetricTypeName(metric.metric_id)

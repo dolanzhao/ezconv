@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <functional>
 #include <bitset>
+#include <iomanip>
 
 #include "meta_reader.h"
 #include "absl/log/log.h"
@@ -117,7 +118,7 @@ MetaReader::readContent()
                   uint8_t psi_size;
                   f.read(reinterpret_cast<char *>(&psi_size), sizeof(psi_size));
 
-                  for (int i = 0; i < md_arry_size; i++) {
+                  for (auto i = 0; i < md_arry_size; i++) {
                       f.seekg(md_arry_pointer + i * md_size);
                       int64_t md_name_pointer;
                       f.read(reinterpret_cast<char *>(&md_name_pointer),
@@ -167,9 +168,9 @@ MetaReader::readContent()
                               int metric_type_idx = metric_types_.size() - 1;
                               metric_type_idx_map_.insert(
                                   { psi_metric_id, metric_type_idx });
-                              LOG(ERROR)
-                                  << "Metric[" << metric_type_idx << "/" << psi_metric_id
-                                  << "]: " << metric_name << " - " << ps_name;
+                            //   LOG(ERROR)
+                            //       << "Metric[" << metric_type_idx << "/" << psi_metric_id
+                            //       << "]: " << metric_name << " - " << ps_name;
                           }
                       }
                   }
@@ -202,7 +203,7 @@ MetaReader::readContent()
                   f.read(reinterpret_cast<char *>(&entry_point_size),
                          sizeof(entry_point_size));
 
-                  for (int i = 0; i < num_entry_points; i++) {
+                  for (auto i = 0; i < num_entry_points; i++) {
                       f.seekg(entry_points_array_pointer + i * entry_point_size);
                       int64_t children_size;
                       f.read(reinterpret_cast<char *>(&children_size),
@@ -263,7 +264,7 @@ MetaReader::readContent()
                   char *buffer = new char[size];
                   f.read(buffer, size);
                   int str_offset = 0;
-                  for (int i = 0; i < size; i++) {
+                  for (auto i = 0; i < size; i++) {
                       if (buffer[i] == '\0') {
                           int64_t str_idx = this->profile_->add_string(
                               std::string(buffer + str_offset, i - str_offset));
@@ -291,7 +292,7 @@ MetaReader::readContent()
                          sizeof(this->module_size_));
                   LITTLE_ENDIAN_TO_HOST(this->module_size_);
 
-                  for (int i = 0; i < this->module_num_; i++) {
+                  for (auto i = 0; i < this->module_num_; i++) {
                       f.seekg(this->module_pointer_ + i * this->module_size_ + 8);
 
                       int64_t load_module_path_pointer;
@@ -320,7 +321,7 @@ MetaReader::readContent()
                          sizeof(this->source_file_size_));
                   LITTLE_ENDIAN_TO_HOST(this->source_file_size_);
 
-                  for (int i = 0; i < this->source_file_num_; i++) {
+                  for (auto i = 0; i < this->source_file_num_; i++) {
                       f.seekg(this->source_file_pointer_ + i * this->source_file_size_ +
                               8);
                       int64_t file_path_pointer;
@@ -351,7 +352,7 @@ MetaReader::readContent()
                          sizeof(this->function_size_));
                   LITTLE_ENDIAN_TO_HOST(this->function_size_);
 
-                  for (int i = 0; i < this->function_num_; i++) {
+                  for (auto i = 0; i < this->function_num_; i++) {
                       f.seekg(this->function_pointer_ + i * this->function_size_);
 
                       int64_t function_name_pointer;
@@ -432,7 +433,7 @@ MetaReader::readContent()
     LOG(INFO) << "Version: " << static_cast<int>(major_version_) << "."
               << static_cast<int>(minor_version_);
 
-    for (int i = 0; i < section_offset_map.size(); i++) {
+    for (auto i = 0; i < section_offset_map.size(); i++) {
         int64_t size;
         file_.read(reinterpret_cast<char *>(&size), sizeof(size));
         LITTLE_ENDIAN_TO_HOST(size);
@@ -443,7 +444,7 @@ MetaReader::readContent()
         section_pointer_.push_back(pointer);
     }
 
-    for (int i = 0; i < section_read_order.size(); i++) {
+    for (auto i = 0; i < section_read_order.size(); i++) {
         const std::string &section_name = section_read_order[i];
         int64_t pointer = section_pointer_[section_offset_map.at(section_name)];
         int64_t size = section_size_[section_offset_map.at(section_name)];

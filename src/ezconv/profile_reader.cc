@@ -162,7 +162,7 @@ ProfileReader::readContent()
     LOG(INFO) << "Version: " << static_cast<int>(major_version_) << "."
               << static_cast<int>(minor_version_);
 
-    for (int i = 0; i < section_offset_map.size(); i++) {
+    for (auto i = 0; i < section_offset_map.size(); i++) {
         uint64_t size;
         file_.read(reinterpret_cast<char *>(&size), sizeof(size));
         LITTLE_ENDIAN_TO_HOST(size);
@@ -173,7 +173,7 @@ ProfileReader::readContent()
         section_pointer_.push_back(pointer);
     }
 
-    for (int i = 0; i < section_read_order.size(); i++) {
+    for (auto i = 0; i < section_read_order.size(); i++) {
         const std::string &section_name = section_read_order[i];
         uint64_t pointer = section_pointer_[section_offset_map.at(section_name)];
         uint64_t size = section_size_[section_offset_map.at(section_name)];
