@@ -594,10 +594,16 @@ MetaReader::readCCTChildren(uint32_t pcontext_id, std::fstream &f, int64_t point
             HpcToolkitContextInfo parent_ctxt_info = context_info_map_[pcontext_id];
             if (parent_ctxt_info.is_entry) {
                 // LOG(ERROR) << "Parent is entry";
-                Profile::function_t *func = this->profile_->add_function(
-                    this->empty_source_file_, be_calledfunc->get_name(), 0);
-                Profile::location_t *location = this->profile_->add_location(func, 0);
-                context = this->profile_->add_context(location, pcontext);
+                std::string be_calledfunc_name =
+                    this->profile_->get_string_table()->get_string(be_calledfunc->get_name());
+                if (be_calledfunc_name != "forward" &&
+                    be_calledfunc_name != "_wrapped_call_impl" &&
+                    be_calledfunc_name != "_call_impl") {
+                    Profile::function_t *func = this->profile_->add_function(
+                        this->empty_source_file_, be_calledfunc->get_name(), 0);
+                    Profile::location_t *location = this->profile_->add_location(func, 0);
+                    context = this->profile_->add_context(location, pcontext);
+                }
             } else {
                 // LOG(ERROR) << "Parent is not entry";
                 Profile::source_file_t *source_file = nullptr;
@@ -621,11 +627,22 @@ MetaReader::readCCTChildren(uint32_t pcontext_id, std::fstream &f, int64_t point
                 if (source_file == nullptr) {
                     source_file = this->empty_source_file_;
                 }
-                Profile::function_t *func = this->profile_->add_function(
-                    source_file, be_calledfunc->get_name(), 0);
-                Profile::location_t *location =
-                    this->profile_->add_location(func, rel_line_no);
-                context = this->profile_->add_context(location, pcontext);
+                std::string be_calledfunc_name =
+                    this->profile_->get_string_table()->get_string(
+                        be_calledfunc->get_name());
+                if (be_calledfunc_name != "forward" &&
+                    be_calledfunc_name != "_wrapped_call_impl" &&
+                    be_calledfunc_name != "_call_impl") {
+                    if (be_calledfunc_name == "<gpu kernel>") {
+                        source_file = this->empty_source_file_;
+                        rel_line_no = 0;
+                    }
+                    Profile::function_t *func = this->profile_->add_function(
+                        source_file, be_calledfunc->get_name(), 0);
+                    Profile::location_t *location =
+                        this->profile_->add_location(func, rel_line_no);
+                    context = this->profile_->add_context(location, pcontext);
+                }
             }
         } else if (lexical_type == 1) {
             // LOG(ERROR) << "Lexical type is 1";
@@ -672,66 +689,66 @@ MetaReader::readCCTChildren(uint32_t pcontext_id, std::fstream &f, int64_t point
             // LOG(ERROR) << "Lexical type is 3";
             // LOG(ERROR) << "children : [" << children_pointer << "/" << children_size <<
             // "]";
-            Profile::function_t *be_calledfunc = context_belongfunction_map_[pcontext_id];
-            context_belongfunction_map_.insert({ context_id, be_calledfunc });
-            if (children_pointer == 0 || children_size == 0) {
-                HpcToolkitContextInfo parent_ctxt_info = context_info_map_[pcontext_id];
-                if (parent_ctxt_info.lexical_type == 2) {
-                    Profile::source_file_t *be_called_sourcefile =
-                        be_calledfunc->get_source_file();
-                    Profile::source_file_t *source_file = nullptr;
-                    int32_t rel_line_no = 0;
-                    if (parent_ctxt_info.sourcefile_idx != -1) {
-                        int64_t rel_sourcefile_idx = (parent_ctxt_info.sourcefile_idx -
-                                                      this->source_file_pointer_) /
-                            this->source_file_size_;
-                        rel_sourcefile_idx =
-                            rel_sourcefile_idx < 0 ? 0 : rel_sourcefile_idx;
-                        source_file = this->sourcefile_idx_map_[rel_sourcefile_idx];
-                        rel_line_no = parent_ctxt_info.sourcefile_line;
-                    }
-                    if (source_file == nullptr) {
-                        source_file = this->empty_source_file_;
-                    }
-                    if (be_called_sourcefile != source_file) {
-                        LOG(ERROR) << "3 Source file mismatch";
-                        LOG(ERROR) << "Be called source file: "
-                                   << this->profile_->get_string_table()->get_string(
-                                          be_called_sourcefile->get_location_path());
-                        LOG(ERROR) << "Source file: "
-                                   << this->profile_->get_string_table()->get_string(
-                                          source_file->get_location_path());
-                    }
-                    Profile::location_t *location =
-                        this->profile_->add_location(be_calledfunc, rel_line_no);
-                    pcontext = this->profile_->add_context(location, pcontext);
-                    this->context_idx_map_[parent_ctxt_info.context_id] = pcontext;
-                }
-                Profile::source_file_t *source_file = nullptr;
-                uint64_t offset = 0;
-                if (ctxt_info.load_module_index != -1) {
-                    int64_t rel_module_idx =
-                        (ctxt_info.load_module_index - this->module_pointer_) /
-                        this->module_size_;
-                    rel_module_idx = rel_module_idx < 0 ? 0 : rel_module_idx;
-                    source_file = this->module_idx_map_[rel_module_idx];
-                    offset = ctxt_info.load_module_offset;
-                }
-                if (source_file == nullptr) {
-                    source_file = this->empty_source_file_;
-                }
+            // Profile::function_t *be_calledfunc = context_belongfunction_map_[pcontext_id];
+            // context_belongfunction_map_.insert({ context_id, be_calledfunc });
+            // if (children_pointer == 0 || children_size == 0) {
+            //     HpcToolkitContextInfo parent_ctxt_info = context_info_map_[pcontext_id];
+            //     if (parent_ctxt_info.lexical_type == 2) {
+            //         Profile::source_file_t *be_called_sourcefile =
+            //             be_calledfunc->get_source_file();
+            //         Profile::source_file_t *source_file = nullptr;
+            //         int32_t rel_line_no = 0;
+            //         if (parent_ctxt_info.sourcefile_idx != -1) {
+            //             int64_t rel_sourcefile_idx = (parent_ctxt_info.sourcefile_idx -
+            //                                           this->source_file_pointer_) /
+            //                 this->source_file_size_;
+            //             rel_sourcefile_idx =
+            //                 rel_sourcefile_idx < 0 ? 0 : rel_sourcefile_idx;
+            //             source_file = this->sourcefile_idx_map_[rel_sourcefile_idx];
+            //             rel_line_no = parent_ctxt_info.sourcefile_line;
+            //         }
+            //         if (source_file == nullptr) {
+            //             source_file = this->empty_source_file_;
+            //         }
+            //         if (be_called_sourcefile != source_file) {
+            //             LOG(ERROR) << "3 Source file mismatch";
+            //             LOG(ERROR) << "Be called source file: "
+            //                        << this->profile_->get_string_table()->get_string(
+            //                               be_called_sourcefile->get_location_path());
+            //             LOG(ERROR) << "Source file: "
+            //                        << this->profile_->get_string_table()->get_string(
+            //                               source_file->get_location_path());
+            //         }
+            //         Profile::location_t *location =
+            //             this->profile_->add_location(be_calledfunc, rel_line_no);
+            //         pcontext = this->profile_->add_context(location, pcontext);
+            //         this->context_idx_map_[parent_ctxt_info.context_id] = pcontext;
+            //     }
+            //     Profile::source_file_t *source_file = nullptr;
+            //     uint64_t offset = 0;
+            //     if (ctxt_info.load_module_index != -1) {
+            //         int64_t rel_module_idx =
+            //             (ctxt_info.load_module_index - this->module_pointer_) /
+            //             this->module_size_;
+            //         rel_module_idx = rel_module_idx < 0 ? 0 : rel_module_idx;
+            //         source_file = this->module_idx_map_[rel_module_idx];
+            //         offset = ctxt_info.load_module_offset;
+            //     }
+            //     if (source_file == nullptr) {
+            //         source_file = this->empty_source_file_;
+            //     }
 
-                std::ostringstream oss;
-                oss << std::hex << std::setfill('0') << std::setw(16) << offset;
-                std::string offset_hex_str = oss.str();
+            //     std::ostringstream oss;
+            //     oss << std::hex << std::setfill('0') << std::setw(16) << offset;
+            //     std::string offset_hex_str = oss.str();
 
-                int64_t func_name_idx =
-                    this->profile_->add_string("[0x" + offset_hex_str + "]");
-                Profile::function_t *function =
-                    this->profile_->add_function(source_file, func_name_idx, 0);
-                Profile::location_t *location = this->profile_->add_location(function, 0);
-                context = this->profile_->add_context(location, pcontext);
-            }
+            //     int64_t func_name_idx =
+            //         this->profile_->add_string("[0x" + offset_hex_str + "]");
+            //     Profile::function_t *function =
+            //         this->profile_->add_function(source_file, func_name_idx, 0);
+            //     Profile::location_t *location = this->profile_->add_location(function, 0);
+            //     context = this->profile_->add_context(location, pcontext);
+            // }
         }
 
         if (context != nullptr) {
