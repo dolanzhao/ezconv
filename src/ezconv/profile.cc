@@ -761,6 +761,12 @@ Profile::profile_t::get_metric_type(int index)
     return (*this->metric_type_list_)[index];
 }
 
+Profile::function_t *
+Profile::profile_t::get_parent_ctxt_func(Profile::context_t *ctxt)
+{
+    return ctxt->get_location()->get_leaf_line()->get_function();
+}
+
 Profile::sample_t *
 Profile::profile_t::add_sample(Profile::context_t *ctxt,
                                std::vector<uint64_t> &metric_values)

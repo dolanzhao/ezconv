@@ -168,9 +168,10 @@ MetaReader::readContent()
                               int metric_type_idx = metric_types_.size() - 1;
                               metric_type_idx_map_.insert(
                                   { psi_metric_id, metric_type_idx });
-                            //   LOG(ERROR)
-                            //       << "Metric[" << metric_type_idx << "/" << psi_metric_id
-                            //       << "]: " << metric_name << " - " << ps_name;
+                              //   LOG(ERROR)
+                              //       << "Metric[" << metric_type_idx << "/" <<
+                              //       psi_metric_id
+                              //       << "]: " << metric_name << " - " << ps_name;
                           }
                       }
                   }
@@ -594,15 +595,26 @@ MetaReader::readCCTChildren(uint32_t pcontext_id, std::fstream &f, int64_t point
             HpcToolkitContextInfo parent_ctxt_info = context_info_map_[pcontext_id];
             if (parent_ctxt_info.is_entry) {
                 // LOG(ERROR) << "Parent is entry";
-                std::string be_calledfunc_name =
-                    this->profile_->get_string_table()->get_string(be_calledfunc->get_name());
-                if (be_calledfunc_name != "forward" &&
-                    be_calledfunc_name != "_wrapped_call_impl" &&
-                    be_calledfunc_name != "_call_impl") {
-                    Profile::function_t *func = this->profile_->add_function(
-                        this->empty_source_file_, be_calledfunc->get_name(), 0);
-                    Profile::location_t *location = this->profile_->add_location(func, 0);
-                    context = this->profile_->add_context(location, pcontext);
+
+                std::string parent_ctxt_func_name =
+                    this->profile_->get_string_table()->get_string(
+                        pcontext->get_location()
+                            ->get_leaf_line()
+                            ->get_function()
+                            ->get_name());
+                if (parent_ctxt_func_name != "<gpu kernel>") {
+                    std::string be_calledfunc_name =
+                        this->profile_->get_string_table()->get_string(
+                            be_calledfunc->get_name());
+                    if (be_calledfunc_name != "forward" &&
+                        be_calledfunc_name != "_wrapped_call_impl" &&
+                        be_calledfunc_name != "_call_impl") {
+                        Profile::function_t *func = this->profile_->add_function(
+                            this->empty_source_file_, be_calledfunc->get_name(), 0);
+                        Profile::location_t *location =
+                            this->profile_->add_location(func, 0);
+                        context = this->profile_->add_context(location, pcontext);
+                    }
                 }
             } else {
                 // LOG(ERROR) << "Parent is not entry";
@@ -627,21 +639,29 @@ MetaReader::readCCTChildren(uint32_t pcontext_id, std::fstream &f, int64_t point
                 if (source_file == nullptr) {
                     source_file = this->empty_source_file_;
                 }
-                std::string be_calledfunc_name =
+                std::string parent_ctxt_func_name =
                     this->profile_->get_string_table()->get_string(
-                        be_calledfunc->get_name());
-                if (be_calledfunc_name != "forward" &&
-                    be_calledfunc_name != "_wrapped_call_impl" &&
-                    be_calledfunc_name != "_call_impl") {
-                    if (be_calledfunc_name == "<gpu kernel>") {
-                        source_file = this->empty_source_file_;
-                        rel_line_no = 0;
+                        pcontext->get_location()
+                            ->get_leaf_line()
+                            ->get_function()
+                            ->get_name());
+                if (parent_ctxt_func_name != "<gpu kernel>") {
+                    std::string be_calledfunc_name =
+                        this->profile_->get_string_table()->get_string(
+                            be_calledfunc->get_name());
+                    if (be_calledfunc_name != "forward" &&
+                        be_calledfunc_name != "_wrapped_call_impl" &&
+                        be_calledfunc_name != "_call_impl") {
+                        if (be_calledfunc_name == "<gpu kernel>") {
+                            source_file = this->empty_source_file_;
+                            rel_line_no = 0;
+                        }
+                        Profile::function_t *func = this->profile_->add_function(
+                            source_file, be_calledfunc->get_name(), 0);
+                        Profile::location_t *location =
+                            this->profile_->add_location(func, rel_line_no);
+                        context = this->profile_->add_context(location, pcontext);
                     }
-                    Profile::function_t *func = this->profile_->add_function(
-                        source_file, be_calledfunc->get_name(), 0);
-                    Profile::location_t *location =
-                        this->profile_->add_location(func, rel_line_no);
-                    context = this->profile_->add_context(location, pcontext);
                 }
             }
         } else if (lexical_type == 1) {
@@ -689,11 +709,13 @@ MetaReader::readCCTChildren(uint32_t pcontext_id, std::fstream &f, int64_t point
             // LOG(ERROR) << "Lexical type is 3";
             // LOG(ERROR) << "children : [" << children_pointer << "/" << children_size <<
             // "]";
-            // Profile::function_t *be_calledfunc = context_belongfunction_map_[pcontext_id];
+            // Profile::function_t *be_calledfunc =
+            // context_belongfunction_map_[pcontext_id];
             // context_belongfunction_map_.insert({ context_id, be_calledfunc });
             // if (children_pointer == 0 || children_size == 0) {
-            //     HpcToolkitContextInfo parent_ctxt_info = context_info_map_[pcontext_id];
-            //     if (parent_ctxt_info.lexical_type == 2) {
+            //     HpcToolkitContextInfo parent_ctxt_info =
+            //     context_info_map_[pcontext_id]; if (parent_ctxt_info.lexical_type == 2)
+            //     {
             //         Profile::source_file_t *be_called_sourcefile =
             //             be_calledfunc->get_source_file();
             //         Profile::source_file_t *source_file = nullptr;
@@ -746,8 +768,8 @@ MetaReader::readCCTChildren(uint32_t pcontext_id, std::fstream &f, int64_t point
             //         this->profile_->add_string("[0x" + offset_hex_str + "]");
             //     Profile::function_t *function =
             //         this->profile_->add_function(source_file, func_name_idx, 0);
-            //     Profile::location_t *location = this->profile_->add_location(function, 0);
-            //     context = this->profile_->add_context(location, pcontext);
+            //     Profile::location_t *location = this->profile_->add_location(function,
+            //     0); context = this->profile_->add_context(location, pcontext);
             // }
         }
 

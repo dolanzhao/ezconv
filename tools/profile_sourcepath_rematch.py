@@ -17,7 +17,7 @@ flags.DEFINE_string('exe_source_folder_path', "",
                     'The path of the exe source folder')
 
 
-_exe_source_folder_files: list[str] = []
+_exe_source_folder_files = []
 
 
 def search_all_files(folder_path: str, store_list: list):

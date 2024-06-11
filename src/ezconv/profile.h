@@ -329,6 +329,9 @@ public:
     metric_type_t *
     get_metric_type(int index);
 
+    function_t *
+    get_parent_ctxt_func(context_t *ctxt);
+
 private:
     std::vector<metric_type_t *> *metric_type_list_;
     std::vector<sample_t *> *sample_list_;
